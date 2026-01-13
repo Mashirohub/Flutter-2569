@@ -13,7 +13,12 @@ class _ShowTaskState extends State<ShowTask> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
-  // ฟังก์ชันสำหรับแสดง Dialog เพิ่มงาน
+  // ดึงข้อมูลทั้งหมดจากฐานข้อมูล
+  Future<List<Task>> _fetchAllTasks() async {
+    return await DatabaseHelper.instance.readAllTasks();
+  }
+
+  // Dialog เพิ่มงาน
   void showInsertTaskForm() {
     showDialog(
       context: context,
@@ -35,9 +40,7 @@ class _ShowTaskState extends State<ShowTask> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context); // ปิด dialog
-              },
+              onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
@@ -52,8 +55,8 @@ class _ShowTaskState extends State<ShowTask> {
                 _titleController.clear();
                 _descriptionController.clear();
 
-                Navigator.pop(context); // ปิด dialog
-                setState(() {}); // refresh หน้าจอ
+                Navigator.pop(context);
+                setState(() {}); // refresh list
               },
               child: const Text('Save'),
             ),
@@ -70,13 +73,46 @@ class _ShowTaskState extends State<ShowTask> {
         title: const Text('Task List'),
         backgroundColor: Colors.lime,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showInsertTaskForm();
+
+      // ===== body ตามรูป =====
+      body: FutureBuilder<List<Task>>(
+        future: _fetchAllTasks(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Text('Error: ${snapshot.error}'),
+            );
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+              child: Text('No tasks available.'),
+            );
+          } else {
+            final tasks = snapshot.data!;
+            return ListView.builder(
+              itemCount: tasks.length,
+              itemBuilder: (context, index) {
+                final task = tasks[index];
+                return ListTile(
+                  title: Text(task.title),
+                  subtitle: Text(task.description ?? ''),
+                  trailing: Icon(
+                    task.isDone
+                        ? Icons.check_box
+                        : Icons.check_box_outline_blank,
+                  ),
+                );
+              },
+            );
+          }
         },
+      ),
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: showInsertTaskForm,
         child: const Icon(Icons.add),
       ),
     );
   }
 }
-
