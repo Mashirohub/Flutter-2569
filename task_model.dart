@@ -1,28 +1,41 @@
-class Task {
+class Contact {
   final int? id;
-  final String title;
-  final String? description;
-  final bool isDone;
+  final String firstName;
+  final String lastName;
+  final String email;
+  final String phone;
+  final String groupName;
 
-  Task({this.id, required this.title, this.description, this.isDone = false});
+  Contact({
+    this.id,
+    required this.firstName,
+    required this.lastName,
+    this.email = '',
+    this.phone = '',
+    required this.groupName,
+  });
 
-  // แปลง Object เป็น Map เพื่อเก็บลงฐานข้อมูล
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'title': title,
-      'description': description,
-      'isDone': isDone ? 1 : 0, // SQLite ไม่รองรับ boolean โดยตรง
+      'firstName': firstName,
+      'lastName': lastName,
+      'email': email,
+      'phone': phone,
+      'groupName': groupName,
     };
   }
 
-  // แปลง Map จากฐานข้อมูลกลับมาเป็น Object
-  factory Task.fromMap(Map<String, dynamic> map) {
-    return Task(
-      id: map['id'],
-      title: map['title'],
-      description: map['description'],
-      isDone: map['isDone'] == 1,
+  factory Contact.fromMap(Map<String, dynamic> map) {
+    return Contact(
+      id: map['id'] as int?,
+      firstName: map['firstName'] as String? ?? '',
+      lastName: map['lastName'] as String? ?? '',
+      email: map['email'] as String? ?? '',
+      phone: map['phone'] as String? ?? '',
+      groupName: map['groupName'] as String? ?? 'Other',
     );
   }
+
+  String get fullName => '$firstName $lastName'.trim();
 }

@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'My Flutter App',
       debugShowCheckedModeBanner: false,
-      home: ShowTask(),
+      home: ShowContact(),
     );
   }
 }

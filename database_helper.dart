@@ -1,24 +1,17 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'task_model.dart'; // import model ของคุณ
+import 'task_model.dart';
 
 class DatabaseHelper {
-  // Singleton instance
-  static final DatabaseHelper instance = DatabaseHelper.init();
+  static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
 
-  // Private constructor
-  DatabaseHelper.init();
+  DatabaseHelper._init();
 
-  Future _createTable(Database db, int version) async {
-    await db.execute('''
-    CREATE TABLE tasks (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      description TEXT,
-      isDone INTEGER NOT NULL
-    )
-  ''');
+  Future<Database> get database async {
+    if (_database != null) return _database!;
+    _database = await _initDB('contacts_workshop.db');
+    return _database!;
   }
 
   Future<Database> _initDB(String filePath) async {
@@ -28,41 +21,44 @@ class DatabaseHelper {
     return await openDatabase(
       path,
       version: 1,
-      onCreate: _createTable,
+      onCreate: (db, version) async {
+        await db.execute('''
+          CREATE TABLE contacts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            firstName TEXT NOT NULL,
+            lastName TEXT,
+            email TEXT DEFAULT '',
+            phone TEXT DEFAULT '',
+            groupName TEXT NOT NULL DEFAULT 'Other'
+          )
+        ''');
+      },
     );
   }
 
-  Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDB('tasks.db');
-    return _database!;
-  }
-
-  Future<int> insertTask(Task task) async {
+  Future<int> insertContact(Contact contact) async {
     final db = await instance.database;
-    return await db.insert('tasks', task.toMap());
+    return await db.insert('contacts', contact.toMap());
   }
 
-  Future<List<Task>> readAllTasks() async {
+  Future<List<Contact>> readAllContacts() async {
     final db = await instance.database;
-    final result = await db.query('tasks');
-    return result.map((json) => Task.fromMap(json)).toList();
+    final result = await db.query('contacts');
+    return result.map((json) => Contact.fromMap(json)).toList();
   }
 
-  Future<int> deleteTask(int id) async {
+  Future<int> deleteContact(int id) async {
     final db = await instance.database;
-    return await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
+    return await db.delete('contacts', where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<int> updateTask(Task task) async {
+  Future<int> updateContact(Contact contact) async {
     final db = await instance.database;
     return await db.update(
-      'tasks',
-      task.toMap(),
+      'contacts',
+      contact.toMap(),
       where: 'id = ?',
-      whereArgs: [task.id],
+      whereArgs: [contact.id],
     );
   }
-
-
 }
